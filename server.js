@@ -4,12 +4,16 @@ var express = require('express'),
 
 var HOSTNAME = 'localhost',
     PORT = 8080,
-    PUBLIC_DIR = __dirname + '/public_html';
+    PUBLIC_DIR = __dirname + '/public_html',
+    REQUEST_COUNT = 0
 
-app.use(function (req) {
+app.use(function (req, res, done) {
+	d = new Date();
+	console.log("[%s] [%s]", d.toLocaleString(), REQUEST_COUNT++);
 	// Здесь нужно написать журналирование в формате
 	// (журналирование - вывод в консоль)
 	// [время] [номер запроса по счету]
+	done();
 });
 
 app
