@@ -7,12 +7,19 @@ define(function(require) {
 
 	var View = BaseView.extend({
 		template: function() {
-			return tmpl({user: user});
+			return tmpl({
+				user: user,
+				errorReason: this.errorReason,
+				validationError: user.validationError || {},
+				formData: this.formData || {},
+				errorAnimation: this.errorAnimation
+			});
 		},
 		model: user,
 		className: 'game__main game__main_visible js-register',
 		events: {
 			'submit .js-form': 'submit',
+			'reset .js-form': 'reset',
 			'click .js-camera': 'showCamera',
 			'mouseover .js-delete-avatar': 'hoverOnPreviewImg',
 			'mouseout .js-delete-avatar': 'hoverOnPreviewImg',
@@ -21,11 +28,58 @@ define(function(require) {
 			'click .js-cancel': 'cancel'
 		},
 		show: function () {
-			this.$('.game-menu__form').attr('novalidate', 'novalidate');
+			console.log("show()", this, this.$('.game-menu__form'));
+			this.$('.js-form').attr('novalidate', 'novalidate');
 			return BaseView.prototype.show.call(this);
 		},
 		initialize: function () {
+			this.errorReason = false;
+			this.errorAnimation = true;
+			return BaseView.prototype.initialize.call(this);
+		},
+		submit: function (event) {
+			event.preventDefault();
+			this.formData = this.$('.js-form').serializeObject();
+			this.formData.email = this.formData.email.toLowerCase();
+			this.formData.login = this.formData.login.toLowerCase();
 
+			this.model.save(this.formData, {
+				success: function (model, xhr) {
+					console.log(xhr);
+					user.set({isRegistered: true});
+					this.errorReason = false;
+					this.render();
+					this.show();
+					this.formData = null;
+					this.$('.js-form').trigger('reset');
+					this.errorAnimation = true;
+					Backbone.history.navigate('#main', {trigger: true});
+				}.bind(this),
+				error: function (model, xhr) {
+					xhr.responseText == xhr.responseText || '{}';
+					this.errorReason = JSON.parse(xhr.responseText).error;
+					this.render();
+					this.show();
+					this.errorAnimation = false;
+					console.log(this.errorReason);
+				}.bind(this)
+			});
+
+			if (user.validationError) {
+				console.warn('[validation error]', user.validationError);
+			}
+			this.render();
+			this.show();
+		},
+		reset: function () {
+			$.each(this.$('.js-input'), function (key, val) {
+				$(val).attr('value', '');
+			});
+		},
+		bindEvents: function () {
+			this.listenTo(this.model, 'change', function (event) {
+				console.log('change', event);
+			});
 		},
 		hoverOnPreviewImg: function (event) {
 			if (event.originalEvent.type === 'mouseover') {
@@ -35,40 +89,7 @@ define(function(require) {
 				this.$('.avatar__delete').removeClass('avatar__delete_visible');
 				this.$('.avatar__preview').removeClass('avatar__preview_faded');
 			} else {
-			}
-		},
-		submit: function (event) {
-			event.preventDefault();
-			var data = this.$('.js-form').serializeObject()
-
-			this.model.save(data, {
-				success: function (model, xhr) {
-					user.set({isRegistered: true});
-					this.render();
-					this.trigger('navigate')
-				}.bind(this),
-				error: function (model, xhr) {
-					alert('error');
-				}
-			});
-
-			if (user.validationError) {
-				this.$('.menu__item_input').
-					removeClass('menu__item_input_valid');
-				$.each(user.validationError, function(key, val) {
-					if (!val) {
-						this.$('.menu__item_input[name=' + key + ']').addClass('menu__item_input_invalid');
-					} else {
-						this.$('.menu__item_input[name=' + key + ']').addClass('menu__item_input_valid');
-					}
-				}.bind(this));
-
-			} else {
-				this.$('.menu__item_input')
-					.removeClass('menu__item_input_invalid')
-					.addClass('menu__item_input_valid');
-
-				this.$('.js-form')[0].reset();
+				console.log('errorets');
 			}
 		},
 		showCamera: function() {
@@ -145,6 +166,7 @@ define(function(require) {
 			FileAPI.Camera.publish($preview, { width: 218, height: 218 }, function (err, cam) {
 				this.camera = cam;
 				if (err) {
+					console.warn('error');//todo notifier
 					$preview.find('video').hide();
 					$preview.css('width','0').css('height','0');
 

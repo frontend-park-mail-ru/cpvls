@@ -13,7 +13,6 @@ define(function(require) {
 		className: 'toolbar__rar',
 		initialize: function () {
 			this.render();
-
 		},
 		render: function () {
 			this.$el.html(this.template());

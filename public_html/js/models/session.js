@@ -11,7 +11,7 @@ define(function(require) {
 		},
 		url: '/api/session/',
 		validate: function (formData) {
-			console.log('formData', formData);
+			console.info('[formData]', formData);
 			var error = {};
 			$.each(formData, function(key, val) {
 				if (!val) {
@@ -24,6 +24,23 @@ define(function(require) {
 				return error;
 			}
 		},
+		sync: function (method, model, options) {
+			options.url = this.url;
+			switch (method) {
+				case 'create':
+					Backbone.sync('create', this, options);
+					break;
+				case 'read':
+					Backbone.sync('read', this, options);
+					break;
+				case 'update':
+					console.info('[unsupported method, ignoring]');
+					break;
+				case 'delete':
+					Backbone.sync('delete', this, options);
+					break;
+			}
+		}
 	});
 
 	return new SessionModel();

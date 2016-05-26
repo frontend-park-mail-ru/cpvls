@@ -10,7 +10,7 @@ module.exports = function (grunt) {
 				command: "node server.js"
 			},
             'back': {
-                command: "java -cp cpvls_serv.jar main.Main 8080"
+                command: "java -cp cpvls_serv.jar main.Main"
             }
 		},
 
@@ -44,6 +44,7 @@ module.exports = function (grunt) {
 
 		concurrent: {
             dev: ['watch', 'shell:front', 'shell:back'],
+            devfront: ['watch', 'shell:front'],
             options: {
                 logConcurrentOutput: true
             }
@@ -113,5 +114,6 @@ module.exports = function (grunt) {
     grunt.registerTask('sas', ['sass:dev', 'concat']);
 
     grunt.registerTask('test', ['qunit:all']);
+    grunt.registerTask('front', ['concurrent:devfront']);
     grunt.registerTask('default', ['concurrent']);
 };
